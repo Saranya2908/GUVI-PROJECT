@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Forum with Categories, Like, Reply, and CRUD Operations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        header {
+            background-color:#1d96b1;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .category-button {
+            background-color:#1d96b1;
+            color: white;
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .category-button:hover {
+            background-color:#1d96b1;
+        }
+        .post {
+            background-color: white;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .post-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .post-author {
+            font-style: italic;
+            color: #555;
+        }
+        .post-content {
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+        .like-button {
+            background-color:#1d96b1;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .like-button:hover {
+            background-color:#1d96b1;
+        }
+        .like-count {
+            font-size: 1em;
+            color: #333;
+            margin-left: 10px;
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #1d96b1;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color:#1d96b1;
+        }
+        .reply-container {
+            margin-left: 20px;
+            margin-top: 10px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Discussion Forum with Categories</h1>
+</header>
+
+<div class="container">
+    <!-- Category buttons -->
+    <div id="categoryButtons">
+        <button class="category-button" onclick="showCategory('Technology')">Technology</button>
+        <button class="category-button" onclick="showCategory('Science')">Science</button>
+        <button class="category-button" onclick="showCategory('General')">General Discussion</button>
+    </div>
+
+    <!-- Form to add a new post -->
+    <div class="form-container" id="newPostForm">
+        <h2>Post a New Question</h2>
+        <form id="postForm">
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+                <option value="Technology">Technology</option>
+                <option value="Science">Science</option>
+                <option value="General">General Discussion</option>
+            </select>
+
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" placeholder="Enter your question title" required>
+
+            <label for="author">Your Name</label>
+            <input type="text" id="author" name="author" placeholder="Enter your name" required>
+
+            <label for="content">Content</label>
+            <textarea id="content" name="content" rows="5" placeholder="Write your question here" required></textarea>
+
+            <button type="submit">Submit Post</button>
+        </form>
+    </div>
+
+    <!-- Posts will be dynamically displayed here -->
+    <div id="postsContainer"></div>
+</div>
+
+<script>
+// Simulating a database with localStorage for posts, likes, and replies by category
+let posts = JSON.parse(localStorage.getItem('posts')) || {};
+
+// Function to show posts from a selected category
+function showCategory(category) {
+    const postsContainer = document.getElementById('postsContainer');
+    postsContainer.innerHTML = '';
+    document.getElementById('newPostForm').style.display = 'block';
+
+    if (!posts[category]) {
+        posts[category] = [];
+    }
+
+    posts[category].forEach((post, postIndex) => {
+        const postElement = document.createElement('div');
+        postElement.classList.add('post');
+
+        postElement.innerHTML = `
+            <div class="post-title">${post.title}</div>
+            <div class="post-author">Posted by ${post.author}</div>
+            <div class="post-content">${post.content}</div>
+            <button class="like-button" onclick="likePost('${category}', ${postIndex})">Like</button>
+            <span class="like-count">${post.likes} Likes</span>
+            <button class="like-button" onclick="editPost('${category}', ${postIndex})">Edit</button>
+            <button class="like-button" onclick="deletePost('${category}', ${postIndex})">Delete</button>
+            <hr>
+            <h3>Replies</h3>
+            <div class="reply-container" id="replies-${category}-${postIndex}">
+                ${renderReplies(post.replies, category, postIndex)}
+            </div>
+            <form id="replyForm-${category}-${postIndex}" onsubmit="submitReply(event, '${category}', ${postIndex})">
+                <textarea name="replyContent" placeholder="Write your reply..." required></textarea>
+                <button type="submit">Reply</button>
+            </form>
+        `;
+        
+        postsContainer.appendChild(postElement);
+    });
+}
+
+// Function to render replies
+function renderReplies(replies, category, postIndex) {
+    return replies.map(reply => `
+        <div class="reply">
+            <strong>${reply.author}:</strong> ${reply.content}
+        </div>
+    `).join('');
+}
+
+// Function to like a post
+function likePost(category, postIndex) {
+    posts[category][postIndex].likes += 1;
+    localStorage.setItem('posts', JSON.stringify(posts));
+    showCategory(category);
+}
+
+// Function to edit a post
+function editPost(category, postIndex) {
+    const post = posts[category][postIndex];
+    document.getElementById('title').value = post.title;
+    document.getElementById('author').value = post.author;
+    document.getElementById('content').value = post.content;
+
+    // Update post when submitting the form again
+    document.getElementById('postForm').onsubmit = function(event) {
+        event.preventDefault();
+        post.title = document.getElementById('title').value;
+        post.author = document.getElementById('author').value;
+        post.content = document.getElementById('content').value;
+
+        localStorage.setItem('posts', JSON.stringify(posts));
+        showCategory(category);
+    };
+}
+
+// Function to delete a post
+function deletePost(category, postIndex) {
+    posts[category].splice(postIndex, 1);
+    localStorage.setItem('posts', JSON.stringify(posts));
+    showCategory(category);
+}
+
+// Function to submit a reply
+function submitReply(event, category, postIndex) {
+    event.preventDefault();
+    const replyContent = event.target.replyContent.value;
+    const reply = {
+        author: 'Anonymous', // You can extend this to take author name input if desired
+        content: replyContent
+    };
+    
+    posts[category][postIndex].replies.push(reply);
+    localStorage.setItem('posts', JSON.stringify(posts));
+
+    // Clear the reply form
+    event.target.replyContent.value = '';
+
+    showCategory(category);
+}
+
+// Handle post form submission
+document.getElementById('postForm').onsubmit = function(event) {
+    event.preventDefault();
+
+    const category = document.getElementById('category').value;
+    if (!posts[category]) {
+        posts[category] = [];
+    }
+
+    const newPost = {
+        title: document.getElementById('title').value,
+        author: document.getElementById('author').value,
+        content: document.getElementById('content').value,
+        likes: 0,
+        replies: []  // Store replies for each post
+    };
+
+    posts[category].push(newPost);
+    localStorage.setItem('posts', JSON.stringify(posts));
+
+    // Clear the form
+    document.getElementById('title').value = '';
+    document.getElementById('author').value = '';
+    document.getElementById('content').value = '';
+
+    showCategory(category);
+};
+
+// Initial render: Show "Technology" category by default
+showCategory('Technology');
+</script>
+
+</body>
+</html>

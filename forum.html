@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Forum with Like and CRUD Operations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        header {
+            background-color:#1d96b1;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .post {
+            background-color: white;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .post-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .post-author {
+            font-style: italic;
+            color: #555;
+        }
+        .post-content {
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+        .like-button {
+            background-color: #1d96b1;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .like-button:hover {
+            background-color:#1d96b1;
+        }
+        .like-count {
+            font-size: 1em;
+            color: #1d96b1;
+            margin-left: 10px;
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color:#1d96b1;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1d96b1;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Discussion Forum</h1>
+</header>
+
+<div class="container">
+    <!-- Form to add a new post -->
+    <div class="form-container">
+        <h2>Post a New Question</h2>
+        <form id="postForm">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" placeholder="Enter your question title" required>
+
+            <label for="author">Your Name</label>
+            <input type="text" id="author" name="author" placeholder="Enter your name" required>
+
+            <label for="content">Content</label>
+            <textarea id="content" name="content" rows="5" placeholder="Write your question here" required></textarea>
+
+            <button type="submit">Submit Post</button>
+        </form>
+    </div>
+
+    <!-- Posts will be dynamically displayed here -->
+    <div id="postsContainer"></div>
+</div>
+
+<script>
+// Simulating a database with localStorage for posts and likes
+let posts = JSON.parse(localStorage.getItem('posts')) || [];
+
+// Function to render posts and display them
+function renderPosts() {
+    const postsContainer = document.getElementById('postsContainer');
+    postsContainer.innerHTML = '';
+
+    posts.forEach((post, index) => {
+        const postElement = document.createElement('div');
+        postElement.classList.add('post');
+
+        postElement.innerHTML = `
+            <div class="post-title">${post.title}</div>
+            <div class="post-author">Posted by ${post.author}</div>
+            <div class="post-content">${post.content}</div>
+            <button class="like-button" onclick="likePost(${index})">Like</button>
+            <span class="like-count">${post.likes} Likes</span>
+            <button class="like-button" onclick="editPost(${index})">Edit</button>
+            <button class="like-button" onclick="deletePost(${index})">Delete</button>
+        `;
+        
+        postsContainer.appendChild(postElement);
+    });
+}
+
+// Function to like a post
+function likePost(index) {
+    posts[index].likes += 1;
+    localStorage.setItem('posts', JSON.stringify(posts));
+    renderPosts();
+}
+
+// Function to edit a post
+function editPost(index) {
+    const post = posts[index];
+    document.getElementById('title').value = post.title;
+    document.getElementById('author').value = post.author;
+    document.getElementById('content').value = post.content;
+
+    // Update post when submitting the form again
+    document.getElementById('postForm').onsubmit = function(event) {
+        event.preventDefault();
+        post.title = document.getElementById('title').value;
+        post.author = document.getElementById('author').value;
+        post.content = document.getElementById('content').value;
+
+        localStorage.setItem('posts', JSON.stringify(posts));
+        renderPosts();
+    };
+}
+
+// Function to delete a post
+function deletePost(index) {
+    posts.splice(index, 1);
+    localStorage.setItem('posts', JSON.stringify(posts));
+    renderPosts();
+}
+
+// Handle post form submission
+document.getElementById('postForm').onsubmit = function(event) {
+    event.preventDefault();
+
+    const newPost = {
+        title: document.getElementById('title').value,
+        author: document.getElementById('author').value,
+        content: document.getElementById('content').value,
+        likes: 0
+    };
+
+    posts.push(newPost);
+    localStorage.setItem('posts', JSON.stringify(posts));
+
+    // Clear the form
+    document.getElementById('title').value = '';
+    document.getElementById('author').value = '';
+    document.getElementById('content').value = '';
+
+    renderPosts();
+};
+
+// Initial render
+renderPosts();
+</script>
+
+</body>
+</html>
